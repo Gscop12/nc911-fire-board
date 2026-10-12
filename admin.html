@@ -1,43 +1,40 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#401f29"><title>NC Fire — Test Console</title><style>
 :root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#171b20;color:#e8ecf2}header{background:#40232c;padding:20px max(16px,calc((100vw - 900px)/2));border-bottom:3px solid #94505f}header h1{margin:0;font-size:22px}header small{color:#d5c2c8}main{max-width:900px;margin:24px auto;padding:0 16px;display:grid;gap:16px}.card{background:#252b33;border:1px solid #39414a;border-radius:12px;padding:20px}h2{font-size:18px;margin:0 0 14px}p{line-height:1.5;color:#b9c3cf}label{display:block;margin:14px 0 6px;font-size:13px;font-weight:700}input,select,textarea{width:100%;background:#151b22;color:#fff;border:1px solid #55616d;border-radius:7px;min-height:42px;padding:10px;font:inherit}textarea{min-height:110px;resize:vertical}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}button,.link{border:0;border-radius:7px;padding:12px 18px;background:#a65a6c;color:white;font-weight:700;cursor:pointer}button.secondary,.link{background:#394651}button:disabled{opacity:.45;cursor:not-allowed}.hidden{display:none!important}.status{padding:10px;background:#182028;border-radius:7px;white-space:pre-wrap;overflow-wrap:anywhere}.hint{font-size:12px}.warning{color:#f3cc86}a{color:#bcd9ff}@media(max-width:600px){main{margin:12px auto}.card{padding:15px}.grid{grid-template-columns:1fr}header{padding:15px}header h1{font-size:19px}}</style></head>
-<body><header><h1>NEWTON COUNTY FIRE</h1><small>Authorized Test Toneout Console · v019</small></header><main>
-<section class="card" id="login"><h2>Administrator Sign In</h2><p>The public board needs no account. Publishing test toneouts requires an administrator account.</p><form id="login-form"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required><label for="pass">Password</label><input id="pass" type="password" autocomplete="current-password" required><div class="buttons"><button type="submit">Sign In</button><a class="link" href="/">Return to Board</a></div></form></section>
+<body><header><h1>NEWTON COUNTY FIRE</h1><small>Authorized Test Toneout Console · v020</small></header><main>
+<section class="card" id="login"><h2>Admin Password</h2><p>The public board needs no account. Enter the shared administrator password to enable test publishing.</p><form id="login-form"><label for="pass">Administrator Password</label><input id="pass" type="password" autocomplete="off" required><div class="buttons"><button type="submit">Unlock Console</button><a class="link" href="/">Return to Board</a></div></form></section>
 <section class="card hidden" id="editor"><h2>Publish Test Toneout</h2><p class="warning">TEST EVENTS ONLY. Use fictitious incident details. Published test records are visible to everyone on the board and may generate browser alerts.</p><form id="form"><div class="grid"><div><label for="dept">Department</label><select id="dept" required></select></div><div><label for="type">Classification</label><select id="type"><option value="medical">Medical</option><option value="fire">Fire</option><option value="rescue">MVC / Rescue</option><option value="training">Training</option><option value="cancellation">10-22 / Cancel</option><option value="announcement">Announcement</option><option value="weather">Weather</option></select></div></div><div class="grid"><div><label for="channel">Radio Channel</label><select id="channel"><option value="shiloh">Shiloh Mountain</option><option value="jasper_mountain">Jasper Mountain</option><option value="j_george">J. George Mountain</option></select></div><div><label for="when">Timestamp</label><input id="when" type="datetime-local" required></div></div><label for="description">Public Description</label><textarea id="description" maxlength="1200" required placeholder="TEST ONLY — Jasper Fire, respond to simulated structure fire at Example Road."></textarea><p class="hint">Avoid patient identifiers, real addresses, sensitive operational details, and realistic false emergencies.</p><div class="buttons"><button id="publish" type="submit">Publish Test Toneout</button><button class="secondary" id="signout" type="button">Sign Out</button><a class="link" href="/" target="_blank" rel="noopener">Open Public Board ↗</a></div></form></section>
 <section class="card"><h2>Console Status</h2><div class="status" id="status" role="status">Connecting…</div></section>
-</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
+</main><script>
 (()=>{'use strict';
-const $=id=>document.getElementById(id),show=(id,yes)=>$(id).classList.toggle('hidden',!yes),status=m=>$('status').textContent=m;
-const client=window.supabase?.createClient('https://mltufhymfuywjavvppjj.supabase.co','sb_publishable_OwEGCIWT1_etaKmQxfJAvw_AKJpS9Q3');
+const $=id=>document.getElementById(id),show=(id,on)=>$(id).classList.toggle('hidden',!on),status=text=>$('status').textContent=text;
 const departments=['Deer','Ponca','Jasper','Parthenon','Compton','Hasty','Mt. Judea','Mt. Sherman','Lurton-Pelsor'];
-departments.forEach(d=>{const o=document.createElement('option');o.textContent=d;o.value=d;$('dept').append(o)});
-function resetTime(){const d=new Date(),local=new Date(d.getTime()-d.getTimezoneOffset()*60000);$('when').value=local.toISOString().slice(0,16)}resetTime();
-let currentUser=null;
-async function check(){
- if(!client){status('Supabase library did not load.');return}
- const {data:{user},error}=await client.auth.getUser();
- currentUser=user||null;
- if(error||!user){show('login',true);show('editor',false);status('Signed out. Administrator credentials required.');return}
- const result=await client.from('profiles').select('role').eq('user_id',user.id).single();
- const admin=!result.error&&result.data?.role==='admin';
- show('login',!admin);show('editor',admin);
- status(admin?'Administrator verified. Test publishing enabled.':'Signed in, but this user does not have the administrator role. Contact the project owner.');
- if(!admin)await client.auth.signOut();
+departments.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;$('dept').append(o)});
+const resetTime=()=>{const d=new Date();$('when').value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16)};resetTime();
+let password='';
+async function api(payload){
+ const response=await fetch('/.netlify/functions/admin-toneout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,password}),cache:'no-store'});
+ const body=await response.json().catch(()=>({message:'Unexpected server response'}));
+ if(!response.ok)throw new Error(body.message||'Request failed');
+ return body;
 }
-$('login-form').addEventListener('submit',async e=>{e.preventDefault();status('Signing in…');const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('pass').value});$('pass').value='';if(error){status('Sign-in failed: '+error.message);return}await check()});
-$('signout').addEventListener('click',async()=>{await client.auth.signOut();await check()});
-$('form').addEventListener('submit',async e=>{
- e.preventDefault();if(!currentUser)return;
- const description=$('description').value.trim();
- if(!description||description.length>1200)return status('Description is required (maximum 1,200 characters).');
- if(!confirm('Publish this clearly identified TEST toneout to the PUBLIC countywide board?'))return;
- $('publish').disabled=true;status('Publishing test toneout…');
- const payload={department_names:[$('dept').value],incident_type:$('type').value,source_channel:$('channel').value,occurred_at:new Date($('when').value).toISOString(),public_description:'[TEST — NOT A REAL DISPATCH] '+description};
- const {error}=await client.from('published_toneouts').insert(payload);
- $('publish').disabled=false;
- status(error?'Publish failed: '+error.message:'TEST toneout published. It should appear on the public board automatically.');
- if(!error){$('description').value='';resetTime()}
+$('login-form').addEventListener('submit',async e=>{
+ e.preventDefault();password=$('pass').value;status('Checking administrator password…');
+ try{const r=await api({action:'verify'});show('login',false);show('editor',true);$('pass').value='';status(r.message)}
+ catch(err){password='';status(err.message)}
 });
-check();
+$('signout').onclick=()=>{password='';show('editor',false);show('login',true);status('Console locked.')};
+$('form').addEventListener('submit',async e=>{
+ e.preventDefault();if(!password)return;
+ const description=$('description').value.trim();if(!description||description.length>1200){status('Description required (up to 1,200 characters).');return}
+ if(!confirm('Publish this TEST toneout to the PUBLIC countywide board?'))return;
+ $('publish').disabled=true;status('Publishing test toneout…');
+ try{
+  const r=await api({action:'publish',record:{department:$('dept').value,incident_type:$('type').value,source_channel:$('channel').value,occurred_at:new Date($('when').value).toISOString(),public_description:description}});
+  status(r.message+' Check the public board on another device.');$('description').value='';resetTime();
+ }catch(err){status('Publish failed: '+err.message)}
+ finally{$('publish').disabled=false}
+});
+status('Enter the shared administrator password to unlock this console.');
 })();
 </script></body></html>

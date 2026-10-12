@@ -9,7 +9,8 @@ exports.handler = async (event) => {
  if((event.body||'').length>6000)return reply(413,'Request too large');
  const configured=process.env.NC_FIRE_ADMIN_PASSWORD;
  const key=process.env.NC_FIRE_SUPABASE_SERVICE_ROLE_KEY;
- if(!configured||!key)return reply(503,'Administrator setup incomplete: hosting secrets not configured.');
+ if(!configured)return reply(503,'Netlify Function cannot see NC_FIRE_ADMIN_PASSWORD. Check spelling, Functions scope, and redeploy.');
+ if(!key)return reply(503,'Netlify Function cannot see NC_FIRE_SUPABASE_SERVICE_ROLE_KEY. Check spelling, Functions scope, and redeploy.');
  let input;
  try{input=JSON.parse(event.body||'{}')}catch{return reply(400,'Invalid request')}
  const supplied=String(input.password||'');

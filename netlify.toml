@@ -1,0 +1,7 @@
+[build]
+  publish = "public"
+  command = "mkdir -p public && cp index.html public/index.html"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"

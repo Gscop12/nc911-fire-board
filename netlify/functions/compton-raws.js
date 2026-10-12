@@ -18,7 +18,7 @@ exports.handler = async function() {
     const end = new Date(now+5*60000);
     const url='https://weather.nifc.gov/ords/prd/wx/station/data/'+pad(start)+'/'+pad(end)+'/0';
     const controller = new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),20000);
+    const timeout=setTimeout(()=>controller.abort(),6500);
     try {
       const response=await fetch(url,{signal:controller.signal,headers:{Accept:'application/json','User-Agent':'NewtonCountyFireBoard/1.0'}});
       if (!response.ok) {lastError='NIFC upstream HTTP '+response.status;continue;}
@@ -32,8 +32,8 @@ exports.handler = async function() {
       }
       lastError='NIFC returned '+data.length+' observations but none for Compton ('+NESDIS+') in the last '+minutes+' minutes';
     } catch(error) {
-      lastError=error?.name==='AbortError'?'NIFC request timed out after 20 seconds':('NIFC request failed: '+(error?.message||String(error)));
+      lastError=error?.name==='AbortError'?'NIFC request timed out after 6.5 seconds':('NIFC request failed: '+(error?.message||String(error)));
     } finally {clearTimeout(timeout);}
   }
-  return respond(503,{error:lastError,source:'NIFC',station:NESDIS});
+  return respond(503,{error:lastError,source:'NIFC',station:NESDIS,checkedWindowsMinutes:windows,checkedAt:new Date().toISOString()});
 };
